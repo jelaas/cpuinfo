@@ -1,0 +1,10 @@
+cpuinfo [-aw] [-ps] [-n CPU] [key]
+version apa
+ -a --all         Output all keys found.
+ -n --cpu         Output info for this cpu only.
+ -w --nowhite     Do not output whitespace in values.
+ -p --prefix S    Prefix values with string S.
+ -s --suffix S    Append string S to values.
+ --debug
+
+key = freq|node ...
