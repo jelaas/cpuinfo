@@ -411,7 +411,7 @@ int cpu_assign_props(struct jlhead *cpus)
 static int scan_softnet(struct jlhead *cpus)
 {
 	struct cpu *cpu;
-	char buf[10240], *p;
+	char buf[20480], *p;
 	int rc;
 
 	rc = getfile("/proc/net/softnet_stat", buf, sizeof(buf)-1);
@@ -430,7 +430,7 @@ static int scan_softnet(struct jlhead *cpus)
 static int scan_cpuinfo(struct jlhead *cpus)
 {
 	struct cpu *cpu = NULL;
-	char buf[10240], *p, *v;
+	char buf[102400], *p, *v;
 	int rc;
 	
 	rc = getfile("/proc/cpuinfo", buf, sizeof(buf)-1);
@@ -505,7 +505,7 @@ static int scan_cpuinfo(struct jlhead *cpus)
 static int scan_interrupts(struct jlhead *cpus)
 {
 	struct cpu *cpu;
-	char buf[10240], *p;
+	char buf[20480], *p;
 	int rc;
 
 	rc = getfile("/proc/interrupts", buf, sizeof(buf)-1);
