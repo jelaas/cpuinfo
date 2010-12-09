@@ -511,6 +511,14 @@ static int scan_cpuinfo(struct jlhead *cpus)
 						    strend(v));
 				}
 			}
+			if(strpfx(p, "siblings")) {
+				v = strchr(p, ':');
+				if(v) {
+					v+=2;
+					cpu_set_str(cpu, "siblings",
+						    strend(v));
+				}
+			}
 			if(strpfx(p, "vendor_id")) {
 				v = strchr(p, ':');
 				if(v) {
