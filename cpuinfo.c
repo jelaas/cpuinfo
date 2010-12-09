@@ -49,6 +49,10 @@
 
 /proc/interrupts
 
+/proc/stat
+Lines of: "cpu0 31 0 178 17037710 292 0 1 0 0 0"
+usertime, nicetime, systemtime, idletasktime, iowait, irqtime, softirqtime, stealtime, guesttime
+
  */
 #ifndef VERSION
 #define VERSION "apa"
@@ -540,6 +544,81 @@ static int scan_cpuinfo(struct jlhead *cpus)
 	return 0;
 }
 
+static struct cpu *cpu_get(struct jlhead *cpus, int n)
+{
+	struct cpu *cpu;
+	jl_foreach(cpus, cpu) {
+		if(cpu->n == n)
+			return cpu;
+	}
+	return NULL;
+}
+
+static int scan_cpustat(struct jlhead *cpus)
+{
+	struct cpu *cpu = NULL;
+	char buf[102400], *p;
+	int rc;
+	
+	rc = getfile("/proc/stat", buf, sizeof(buf)-1);
+	if(rc<=0) return 1;
+	
+	p = buf;
+	
+	while(1) {
+		if(strpfx(p, "cpu ")) {
+			goto nextline;
+		}
+
+		if(strpfx(p, "cpu")) {
+			cpu = cpu_get(cpus, atoi(p+3));
+			if(cpu) {
+				p = strchr(p, ' ');
+				if(!p) break;
+				p++;
+				cpu_set(cpu, "user", strtoull(p, NULL, 10));
+				p = strchr(p, ' ');
+				if(!p) break;
+				p++;
+				cpu_set(cpu, "nice", strtoull(p, NULL, 10));
+				p = strchr(p, ' ');
+				if(!p) break;
+				p++;
+				cpu_set(cpu, "system", strtoull(p, NULL, 10));
+				p = strchr(p, ' ');
+				if(!p) break;
+				p++;
+				cpu_set(cpu, "idle", strtoull(p, NULL, 10));
+				p = strchr(p, ' ');
+				if(!p) break;
+				p++;
+				cpu_set(cpu, "iowait", strtoull(p, NULL, 10));
+				p = strchr(p, ' ');
+				if(!p) break;
+				p++;
+				cpu_set(cpu, "irqtime", strtoull(p, NULL, 10));
+				p = strchr(p, ' ');
+				if(!p) break;
+				p++;
+				cpu_set(cpu, "softirqtime", strtoull(p, NULL, 10));
+				p = strchr(p, ' ');
+				if(!p) break;
+				p++;
+				cpu_set(cpu, "steal", strtoull(p, NULL, 10));
+				p = strchr(p, ' ');
+				if(!p) goto nextline;
+				p++;
+				cpu_set(cpu, "guest", strtoull(p, NULL, 10));
+			}
+		}
+	nextline:
+		p = strchr(p, '\n');
+		if(!p) break;
+		p++;
+	}
+	return 0;
+}
+
 static int scan_interrupts(struct jlhead *cpus)
 {
 	struct cpu *cpu;
@@ -646,6 +725,8 @@ int main(int argc, char **argv)
 	scan_cpuinfo(cpus);
 
 	scan_rt_cache(cpus);
+
+	scan_cpustat(cpus);
 
 	/* display */
 	jl_foreach(cpus, cpu) {
