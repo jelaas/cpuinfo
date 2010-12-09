@@ -323,7 +323,14 @@ int cpu_assign_props(struct jlhead *cpus)
 			 cpu->n);
 		rc = getfile(fn, buf, sizeof(buf)-1);
 		if(rc>0) {
-			cpu_set(cpu, "freq", strtoull(buf, NULL, 10));
+			cpu_set(cpu, "cur_freq", strtoull(buf, NULL, 10));
+		}
+		snprintf(fn, sizeof(fn),
+			 "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq",
+			 cpu->n);
+		rc = getfile(fn, buf, sizeof(buf)-1);
+		if(rc>0) {
+			cpu_set(cpu, "max_freq", strtoull(buf, NULL, 10));
 		}
 		snprintf(fn, sizeof(fn),
 			 "/sys/devices/system/cpu/cpu%d/topology/physical_package_id",
@@ -420,6 +427,37 @@ static int scan_softnet(struct jlhead *cpus)
 	p = buf;
 	jl_foreach(cpus, cpu) {
 		cpu_set(cpu, "softnet_stat", strtoull(p, NULL, 16));
+		p = strchr(p, '\n');
+		if(!p) break;
+		p++;
+	}
+	return 0;
+}
+
+static int scan_rt_cache(struct jlhead *cpus)
+{
+	struct cpu *cpu;
+	char buf[20480], *p, *v;
+	int rc;
+
+	rc = getfile("/proc/net/stat/rt_cache", buf, sizeof(buf)-1);
+	if(rc<=0) return 1;
+
+	p = buf;
+	p = strchr(p, '\n');
+	if(p) p++;
+	jl_foreach(cpus, cpu) {
+		cpu_set(cpu, "rt_cache_entries", strtoull(p, NULL, 16));
+		v = strchr(p, ' ');
+		if(v) {
+			while(*v == ' ') v++;
+			cpu_set(cpu, "rt_cache_in_hit",
+				strtoull(v, NULL, 16));
+			v = strchr(v, ' ');
+			if(v)
+				cpu_set(cpu, "rt_cache_in_slow_tot",
+					strtoull(v+1, NULL, 16));
+		}
 		p = strchr(p, '\n');
 		if(!p) break;
 		p++;
@@ -606,6 +644,8 @@ int main(int argc, char **argv)
 	scan_interrupts(cpus);
 
 	scan_cpuinfo(cpus);
+
+	scan_rt_cache(cpus);
 
 	/* display */
 	jl_foreach(cpus, cpu) {
