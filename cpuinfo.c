@@ -630,7 +630,7 @@ static int scan_cpustat(struct jlhead *cpus)
 static int scan_interrupts(struct jlhead *cpus)
 {
 	struct cpu *cpu;
-	char buf[20480], *p;
+	char buf[40960], *p;
 	int rc;
 
 	rc = getfile("/proc/interrupts", buf, sizeof(buf)-1);
@@ -645,6 +645,7 @@ static int scan_interrupts(struct jlhead *cpus)
 		
 		jl_foreach(cpus, cpu) {
 			while(*p == ' ') p++;
+			if(!*p) break;
 			cpu->irqs += strtoull(p, NULL, 10);
 			while(*p != ' ') p++;
 		}
