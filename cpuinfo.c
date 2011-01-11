@@ -66,6 +66,7 @@ usertime, nicetime, systemtime, idletasktime, iowait, irqtime, softirqtime, stea
 #include <stdio.h>
 #include <string.h>
 
+#include <inttypes.h>
 
 #include "jelist.h"
 #include "jelopt.h"
